@@ -1,10 +1,12 @@
 import os
+import logging
 from flask import Flask, request, jsonify
 from telegram import Bot, Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 import asyncio
 
 app = Flask(__name__)
+logging.basicConfig(level=logging.INFO)
 
 TOKEN = os.getenv('API_KEY')
 bot = Bot(token=TOKEN)
@@ -32,11 +34,13 @@ application.add_handler(CommandHandler("video", send_video))
 
 @app.route('/api/webhook', methods=['POST'])
 def webhook():
+    update_json = request.get_json(force=True)
+    logging.info(f"Received update: {update_json}")
+    
     async def handle_update(update_json):
         update = Update.de_json(update_json, bot)
         await application.update_queue.put(update)
 
-    update_json = request.get_json(force=True)
     asyncio.run(handle_update(update_json))
     return jsonify({'status': 'ok'})
 
