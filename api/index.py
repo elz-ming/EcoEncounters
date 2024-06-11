@@ -1,7 +1,7 @@
 import os
 from flask import Flask, request, jsonify
 from telegram import Bot, Update
-from telegram.ext import Application, CommandHandler, MessageHandler
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 app = Flask(__name__)
 
@@ -9,18 +9,18 @@ TOKEN = os.getenv('API_KEY')
 bot = Bot(token=TOKEN)
 application = Application.builder().token(TOKEN).build()
 
-async def start(update: Update, context):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text('Hello! I am Mighty Macaque!')
 
-async def send_photo(update: Update, context):
+async def send_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with open('assets/bird_image.jpg', 'rb') as photo:
         await context.bot.send_photo(chat_id=update.effective_chat.id, photo=photo)
 
-async def send_audio(update: Update, context):
+async def send_audio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with open('assets/bird_audio.mp3', 'rb') as audio:
         await context.bot.send_audio(chat_id=update.effective_chat.id, audio=audio)
 
-async def send_video(update: Update, context):
+async def send_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with open('assets/bird_video.mp4', 'rb') as video:
         await context.bot.send_video(chat_id=update.effective_chat.id, video=video)
 
