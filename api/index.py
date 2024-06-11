@@ -1,7 +1,7 @@
 import os
 from flask import Flask, request, jsonify
 from telegram import Bot, Update
-from telegram.ext import Application, CommandHandler, MessageHandler, Filters
+from telegram.ext import Application, CommandHandler, MessageHandler
 
 app = Flask(__name__)
 
@@ -29,7 +29,6 @@ application.add_handler(CommandHandler("photo", send_photo))
 application.add_handler(CommandHandler("audio", send_audio))
 application.add_handler(CommandHandler("video", send_video))
 
-@app.route('/api/webhook', methods=['POST'])
 @app.route('/api/webhook', methods=['POST'])
 async def webhook():
     update = Update.de_json(request.get_json(force=True), bot)
