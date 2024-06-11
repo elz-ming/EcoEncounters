@@ -39,6 +39,9 @@ application.add_handler(CommandHandler("video", send_video))
 @app.route('/api/webhook', methods=['POST'])
 def webhook():
     try:
+        logging.info(f"Headers: {request.headers}")
+        logging.info(f"Request data: {request.data}")
+        
         update_json = request.get_json(force=True)
         if update_json is None:
             logging.error("Received empty JSON payload")
