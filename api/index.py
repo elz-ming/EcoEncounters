@@ -1,94 +1,39 @@
-from flask import Flask, request, Response
-import requests
 import os
+from flask import Flask, request, jsonify
+from telegram import Bot, Update
+from telegram.ext import Application, CommandHandler, MessageHandler
 
 app = Flask(__name__)
 
 TOKEN = os.getenv('API_KEY')
+bot = Bot(token=TOKEN)
+application = Application.builder().token(TOKEN).build()
 
-# To get chat ID and message sent by client
-def message_parser(message):
-    chat_id = message['message']['chat']['id']
-    text = message['message']['text']
-    print("Chat ID:", chat_id)
-    print("Message:", text)
-    return chat_id, text
+async def start(update: Update, context):
+    await update.message.reply_text('Hello! I am Mighty Macaque!')
 
+async def send_photo(update: Update, context):
+    with open('assets/bird_image.jpg', 'rb') as photo:
+        await context.bot.send_photo(chat_id=update.effective_chat.id, photo=photo)
 
-# To send a text message using Telegram API
-def send_message_telegram(chat_id, text):
-    url = f'https://api.telegram.org/bot{TOKEN}/sendMessage'
-    payload = {
-        'chat_id': chat_id,
-        'text': text
-    }
-    response = requests.post(url, json=payload)
-    return response
+async def send_audio(update: Update, context):
+    with open('assets/bird_audio.mp3', 'rb') as audio:
+        await context.bot.send_audio(chat_id=update.effective_chat.id, audio=audio)
 
+async def send_video(update: Update, context):
+    with open('assets/bird_video.mp4', 'rb') as video:
+        await context.bot.send_video(chat_id=update.effective_chat.id, video=video)
 
-# To send a photo using Telegram API
-def send_photo_telegram(chat_id, photo_path):
-    url = f'https://api.telegram.org/bot{TOKEN}/sendPhoto'
-    files = {'photo': open(photo_path, 'rb')}
-    data = {'chat_id': chat_id}
-    response = requests.post(url, files=files, data=data)
-    return response
+application.add_handler(CommandHandler("start", start))
+application.add_handler(CommandHandler("photo", send_photo))
+application.add_handler(CommandHandler("audio", send_audio))
+application.add_handler(CommandHandler("video", send_video))
 
+@app.route('/api/webhook', methods=['POST'])
+async def webhook():
+    update = Update.de_json(request.get_json(force=True), bot)
+    await application.update_queue.put(update)
+    return jsonify({'status': 'ok'})
 
-# To send a video using Telegram API
-def send_video_telegram(chat_id, video_path):
-    url = f'https://api.telegram.org/bot{TOKEN}/sendVideo'
-    files = {'video': open(video_path, 'rb')}
-    data = {'chat_id': chat_id}
-    response = requests.post(url, files=files, data=data)
-    return response
-
-
-# To send an audio using Telegram API
-def send_audio_telegram(chat_id, audio_path):
-    url = f'https://api.telegram.org/bot{TOKEN}/sendAudio'
-    files = {'audio': open(audio_path, 'rb')}
-    data = {'chat_id': chat_id}
-    response = requests.post(url, files=files, data=data)
-    return response
-
-
-# To send multiple-choice question using Telegram API
-def send_multiple_choice_telegram(chat_id, question, options):
-    url = f'https://api.telegram.org/bot{TOKEN}/sendMessage'
-    keyboard = [[{"text": option, "callback_data": option}] for option in options]
-    reply_markup = {"inline_keyboard": keyboard}
-    payload = {
-        'chat_id': chat_id,
-        'text': question,
-        'reply_markup': reply_markup
-    }
-    response = requests.post(url, json=payload)
-    return response
-
-
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        msg = request.get_json()
-        chat_id, incoming_que = message_parser(msg)
-        if incoming_que.lower() == "photo":
-            send_photo_telegram(chat_id, 'path_to_your_photo.jpg')
-        elif incoming_que.lower() == "video":
-            send_video_telegram(chat_id, 'path_to_your_video.mp4')
-        elif incoming_que.lower() == "audio":
-            send_audio_telegram(chat_id, 'path_to_your_audio.mp3')
-        elif incoming_que.lower() == "question":
-            question = "What is your favorite color?"
-            options = ["Red", "Blue", "Green", "Yellow"]
-            send_multiple_choice_telegram(chat_id, question, options)
-        else:
-            answer = "Still testing"
-            send_message_telegram(chat_id, answer)
-        return Response('ok', status=200)
-    else:
-        return "<h1>Telegram Bot is running</h1>"
-
-
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", debug=False, port=5000)
+if __name__ == "__main__":
+    app.run(port=5000)
