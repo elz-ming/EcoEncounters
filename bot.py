@@ -11,6 +11,10 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+if os.getenv('ENV') != 'prod':
+    from dotenv import load_dotenv
+    load_dotenv()
+
 # Define the bot token
 TOKEN = os.getenv('API_KEY')
 
