@@ -1,12 +1,20 @@
 import os
 import logging
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import (
+    Update, 
+    InlineKeyboardMarkup, 
+    InlineKeyboardButton, 
+    ReplyKeyboardMarkup, 
+    ReplyKeyboardRemove
+)
 from telegram.ext import ( 
     Application, 
     CommandHandler, 
     CallbackQueryHandler, 
     CallbackContext,
-    ContextTypes
+    ContextTypes,
+    MessageHandler,
+    filters
 )
 
 # Configure logging
@@ -20,9 +28,9 @@ logger = logging.getLogger(__name__)
 if os.getenv('ENV') != 'prod':
     from dotenv import load_dotenv
     load_dotenv()
-
-# Define the bot token
-TOKEN = os.getenv('API_KEY')
+    TOKEN = os.getenv('API_KEY_dev')
+else:
+    TOKEN = os.getenv('API_KEY_')
 
 # To be moved to .json later
 QUESTION_BANK = [
@@ -37,6 +45,11 @@ QUESTION_BANK = [
     }
 ]
 
+def prepare_question(index=0):
+    question = QUESTION_BANK[index]['question']
+    options = QUESTION_BANK[index]['options']
+    return question, options
+
 # Define command handlers
 async def start_command(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
@@ -47,7 +60,8 @@ async def start_command(update: Update, context: CallbackContext) -> None:
         "/photo - Send a photo\n"
         "/audio - Send an audio\n"
         "/video - Send a video\n"
-        "/mcq - Sample MCQ\n"
+        "/mcq_inline - Sample MCQ Inline\n"
+        "/mcq_keyboard - Sample MCQ Keyboard\n"
     )
     await update.message.reply_text(message)
 
@@ -64,10 +78,9 @@ async def audio_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def video_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_video(chat_id=update.effective_chat.id, video=open('asset/bird_video.mp4', 'rb'))
 
-async def mcq_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def mcq_inline_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /start is issued."""
-    question = QUESTION_BANK[0]['question']
-    options = QUESTION_BANK[0]['options']
+    question, options = prepare_question()
 
     keyboard = [
         [InlineKeyboardButton(option, callback_data=str(correct)) for option, correct in options]
@@ -79,7 +92,7 @@ async def mcq_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     elif update.callback_query:
         await update.callback_query.edit_message_text(question, reply_markup=reply_markup)
 
-async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def inline_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle button clicks."""
     query = update.callback_query
     await query.answer()
@@ -89,8 +102,28 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await query.edit_message_text(text="That is correct!")
     else:
         await query.edit_message_text(text="Incorrect! Please try again.")
-        await mcq_command(update, context)
+        await mcq_inline_command(update, context)
 
+async def mcq_keyboard_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Ask the multiple-choice question."""
+    question, options = prepare_question()
+
+    keyboard = [[option] for option, _ in options]
+    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
+    await update.message.reply_text(question, reply_markup=reply_markup)
+
+async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle user response."""
+    answer = update.message.text
+    _, options = prepare_question()
+
+    correct_answer = next(option for option, correct in options if correct)
+
+    if answer == correct_answer:
+        await update.message.reply_text("Correct! Macaques live in the forest.", reply_markup=ReplyKeyboardRemove())
+    else:
+        await update.message.reply_text("Incorrect! Please try again.")
+        await mcq_keyboard_command(update, context)
 
 def main():
     """Start the bot."""
@@ -103,9 +136,11 @@ def main():
     application.add_handler(CommandHandler('photo', photo_command))
     application.add_handler(CommandHandler('audio', audio_command))
     application.add_handler(CommandHandler('video', video_command))
-    application.add_handler(CommandHandler("mcq", mcq_command))
+    application.add_handler(CommandHandler("mcq_inline", mcq_inline_command))
+    application.add_handler(CommandHandler("mcq_keyboard", mcq_keyboard_command))
 
-    application.add_handler(CallbackQueryHandler(button))
+    application.add_handler(CallbackQueryHandler(inline_button))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_response))
 
     # Run the bot until you press Ctrl-C or the process receives SIGINT, SIGTERM or SIGABRT
     application.run_polling()
