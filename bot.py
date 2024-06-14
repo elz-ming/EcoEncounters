@@ -31,7 +31,7 @@ if os.getenv('ENV') != 'prod':
     load_dotenv()
     TOKEN = os.getenv('API_KEY_dev')
 else:
-    TOKEN = os.getenv('API_KEY_')
+    TOKEN = os.getenv('API_KEY')
 
 # Load question data from JSON file
 with open('asset/question_bank.json', 'r') as file:
@@ -167,7 +167,7 @@ async def handle_yes_no(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # application.job_queue.run_daily(daily_notification, time=time(hour=10, minute=0, second=0))
 
         # Schedule daily question for testing: run once after 30 seconds
-        context.job_queue.run_once(daily_notification, when=timedelta(seconds=10))
+        context.job_queue.run_once(daily_notification, when=timedelta(seconds=15))
 
 async def daily_notification(context: ContextTypes.DEFAULT_TYPE):
     for user_id in user_data.keys():
