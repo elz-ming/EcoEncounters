@@ -1,0 +1,45 @@
+{
+  "questions": [
+    {
+      "topic": "Macaques",
+      "topic_image_path": "asset/macaque.png",
+      "question": "What should you do when you walk through a troop of macaques?",
+      "options": [
+        { "text": "Keep my distance", "correct": true },
+        { "text": "Smile at them", "correct": false },
+        { "text": "Clap my hands", "correct": false },
+        { "text": "Find another route", "correct": false }
+      ],
+      "correct_response": "That's right! Upon seeing a troop of macaques in your path, it is best not to make eye contact with them or smile as they may interpret that as aggression.",
+      "tips": "Clapping your hands strongly may also clear the way but make sure to keep your distance!",
+      "incorrect_response": "Not quite, try again."
+    },
+    {
+      "topic": "Macaques",
+      "topic_image_path": "asset/macaque.png",
+      "question": "What is the primary diet of a macaque?",
+      "options": [
+        { "text": "Fruits and insects", "correct": true },
+        { "text": "Leaves and grass", "correct": false },
+        { "text": "Fish and meat", "correct": false },
+        { "text": "Nuts and seeds", "correct": false }
+      ],
+      "correct_response": "Correct! Macaques primarily eat fruits and insects.",
+      "incorrect_response": "Not quite, try again."
+    },
+    {
+      "topic": "Boar",
+      "topic_image_path": "asset/boar.png",
+      "question": "If a wild boar suddenly approaches you, what should you do?",
+      "options": [
+        { "text": "Keep food out of sight", "correct": true },
+        { "text": "Walk away slowly", "correct": false },
+        { "text": "Run quickly", "correct": false },
+        { "text": "Hit the pig", "correct": false }
+      ],
+      "correct_response": "Correct! Some wild pigs have been conditioned to see humans as food suppliers. It is best to hide any food or snacks that you have out of their sight.",
+      "tips": "When you walk away slowly and calmly away from them, don't block their path as they may feel cornered",
+      "incorrect_response": "Not quite, try again."
+    }
+  ]
+}
