@@ -50,7 +50,7 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Escape the URL for Markdown V2
     share_link = f'instagram://story-camera?AssetPath={image_url}'
-    message = f'Share to Instagram[URL]({share_link})'
+    message = f'Share to Instagram [URL]({share_link})'
     message = message.replace(".", "\\.").replace("-", "\\-")
     
     await context.bot.send_photo(
