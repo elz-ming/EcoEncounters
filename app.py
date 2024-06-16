@@ -7,7 +7,7 @@ from io import BytesIO
 
 # Load environment variables from .env file
 
-if os.getenv('ENV') == 'prod'
+if os.getenv('ENV') == 'prod':
     MONGODB_URI = os.getenv('MONGODB_URI_prod')
 elif os.getenv('ENV') == 'sandbox':
     MONGODB_URI = os.getenv('MONGODB_URI_sandbox')
