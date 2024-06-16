@@ -50,6 +50,9 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Escape the URL for Markdown V2
     share_link = f'instagram://story-camera?AssetPath={image_url}'
+    message = 'Share to Instagram'
+
+    messageEnt = MessageEntity(type="TEXT_LINK", url=share_link, offset=0, length=len(message))
     
     await context.bot.send_photo(
         chat_id=user_id,
@@ -58,10 +61,8 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     await context.bot.send_message(
         chat_id=user_id,
-        text="Share your achievement with your friends!",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Share to Instagram", url=share_link)]
-        ])
+        text=message,
+        entities=messageEnt
     )
 
 def main():
