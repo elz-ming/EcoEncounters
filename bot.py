@@ -21,12 +21,11 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-if os.getenv('ENV') != 'prod':
+if os.getenv('MONGODB_URI_prod') is None:
     from dotenv import load_dotenv
     load_dotenv()
-    TOKEN = os.getenv('API_KEY_dev')
-else:
-    TOKEN = os.getenv('API_KEY')
+
+TOKEN = os.getenv('API_KEY')
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle the /start command."""

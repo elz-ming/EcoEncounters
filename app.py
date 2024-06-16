@@ -7,14 +7,11 @@ from io import BytesIO
 
 # Load environment variables from .env file
 
-if os.getenv('ENV') == 'prod':
-    MONGODB_URI = os.getenv('MONGODB_URI_prod')
-elif os.getenv('ENV') == 'sandbox':
-    MONGODB_URI = os.getenv('MONGODB_URI_sandbox')
-else:
+if os.getenv('MONGODB_URI_prod') is None:
     from dotenv import load_dotenv
     load_dotenv()
-    MONGODB_URI = os.getenv('MONGODB_URI_dev')
+
+MONGODB_URI = os.getenv('MONGODB_URI')
 
 
 # Connect to MongoDB
