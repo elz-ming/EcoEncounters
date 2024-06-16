@@ -59,8 +59,7 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     await context.bot.send_message(
         chat_id=user_id,
-        text=f"Here is your generated image! <a href='{share_link}'>Click here</a> to share the image on Instagram.",
-        parse_mode=constants.ParseMode.HTML
+        text_markdown_v2_urled=f"Here is your generated image! <a href='{share_link}'>Click here</a> to share the image on Instagram.",
     )
 
 def main():
