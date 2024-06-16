@@ -47,11 +47,7 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Extract the image URL from the callback data
     image_url = f'https://mighty-macaque-30f16fdc84f3.herokuapp.com/images/{image_name}'
-
-    # Escape the URL for Markdown V2
-    share_link = f'instagram://story-camera?AssetPath={image_url}'
-    message = f'[Share to Instagram]({image_url})'
-    message = message.replace(".", "\\.").replace("-", "\\-")
+    share_url = f'https://mighty-macaque-30f16fdc84f3.herokuapp.com/share/{image_name}'
     
     await context.bot.send_photo(
         chat_id=user_id,
@@ -60,8 +56,10 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     await context.bot.send_message(
         chat_id=user_id,
-        text=message,
-        parse_mode='MarkdownV2'
+        text="Welcome! Click the button below to generate an image.",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("Share to Instagram", url=share_url)]
+        ])
     )
 
 def main():
