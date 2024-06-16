@@ -47,7 +47,6 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Extract the image URL from the callback data
     image_url = f'https://mighty-macaque-30f16fdc84f3.herokuapp.com/images/{image_name}'
-    share_url = f'https://mighty-macaque-30f16fdc84f3.herokuapp.com/share/{image_name}'
     
     await context.bot.send_photo(
         chat_id=user_id,
@@ -56,9 +55,33 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     await context.bot.send_message(
         chat_id=user_id,
-        text="Welcome! Click the button below to generate an image.",
+        text="Save and Share your achievements!",
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Share to Instagram", url=share_url)]
+            [InlineKeyboardButton("Save Achievement!", callback_data=f'download_image')]
+        ])
+    )
+
+async def download_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+    user_id = query.message.chat.id
+    callback_data = query.data
+
+    # Extract image_id from callback_data
+    image_url = f'https://mighty-macaque-30f16fdc84f3.herokuapp.com/images/{image_name}'
+
+    # Download the image file
+    file = await context.bot.get_file(image_url)
+    file_path = file.file_path
+
+    # After downloading the image, redirect to Instagram Stories
+    redirect_url = f"instagram-stories://share?backgroundImageUrl={file_path}"
+
+    await context.bot.send_message(
+        chat_id=user_id,
+        text="Save and Share your achievements!",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("Share Achievement!", url=redirect_url)]
         ])
     )
 
@@ -70,6 +93,7 @@ def main():
     # Add handlers for the /start command and callbacks
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(generate_image, pattern='generate_image'))
+    application.add_handler(CallbackQueryHandler(download_image, pattern='download_image_'))
 
     # Run the bot until you press Ctrl-C or the process receives SIGINT, SIGTERM or SIGABRT
     application.run_polling()

@@ -40,25 +40,18 @@ def get_image(filename):
 
 @app.route('/share/<filename>')    
 def share(filename):
-    image_url = f'https://mighty-macaque-30f16fdc84f3.herokuapp.com/images/{filename}'
+    instagram_url = f'instagram://story-camera'
 
     redirect_page = f"""
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="refresh" content="0; url={instagram_url}">
         <title>Redirecting...</title>
-        <script type="text/javascript">
-            function redirect() {{
-                var url = "instagram-stories://share?backgroundImageUrl={image_url}";
-                window.location.href = url;
-            }}
-            window.onload = redirect;
-        </script>
     </head>
     <body>
-        <p>If you are not redirected automatically, follow this <a href="instagram-stories://share?backgroundImageUrl={image_url}">link to share on Instagram</a>.</p>
+        <p>If you are not redirected automatically, follow this <a href="{instagram_url}">link to share on Instagram</a>.</p>
     </body>
     </html>
     """
