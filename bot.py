@@ -58,6 +58,7 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     await context.bot.send_message(
         chat_id=user_id,
+        text="Share your achievement with your friends!",
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("Share to Instagram", url=share_link)]
         ])
