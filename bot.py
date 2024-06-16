@@ -65,7 +65,8 @@ async def download_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     query = update.callback_query
     await query.answer()
     user_id = query.message.chat.id
-    callback_data = query.data
+    
+    image_name = "badge_1"
 
     # Extract image_id from callback_data
     image_url = f'https://mighty-macaque-30f16fdc84f3.herokuapp.com/images/{image_name}'
