@@ -6,11 +6,14 @@ import base64
 from io import BytesIO
 
 # Load environment variables from .env file
-if os.getenv('ENV') != 'prod':
+
+if os.getenv('ENV') == 'prod'
+    MONGODB_URI = os.getenv('MONGODB_URI_prod')
+elif os.getenv('ENV') == 'sandbox':
+    MONGODB_URI = os.getenv('MONGODB_URI_sandbox')
+else:
     from dotenv import load_dotenv
     load_dotenv()
-    MONGODB_URI = os.getenv('MONGODB_URI_dev')
-else:
     MONGODB_URI = os.getenv('MONGODB_URI_dev')
 
 
