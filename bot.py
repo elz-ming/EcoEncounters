@@ -4,7 +4,7 @@ from telegram import (
     Update, 
     InlineKeyboardMarkup, 
     InlineKeyboardButton,
-    constants
+    MessageEntity
 )
 from telegram.ext import ( 
     Application,     
@@ -49,8 +49,7 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     image_url = f'https://mighty-macaque-30f16fdc84f3.herokuapp.com/images/{image_name}'
 
     # Escape the URL for Markdown V2
-    escaped_image_url = image_url.replace('.', '\\.').replace('-', '\\-')
-    share_link = f'instagram://story-camera?AssetPath={escaped_image_url}'
+    share_link = f'instagram://story-camera?AssetPath={image_url}'
     
     await context.bot.send_photo(
         chat_id=user_id,
@@ -59,7 +58,9 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     await context.bot.send_message(
         chat_id=user_id,
-        text_markdown_v2_urled=f"Here is your generated image! <a href='{share_link}'>Click here</a> to share the image on Instagram.",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("Share to Instagram", url=share_link)]
+        ])
     )
 
 def main():
