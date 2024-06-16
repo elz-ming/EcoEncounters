@@ -51,7 +51,7 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         photo=image_url,
         caption="Here is your generated image!",
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Share to Instagram", callback_data='share_to_instagram')]
+            [InlineKeyboardButton("Share to Instagram", callback_data=f'share_to_instagram:{image_url}')]
         ])
     )
 
@@ -60,8 +60,11 @@ async def share_to_instagram(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await query.answer()
     user_id = query.message.chat.id
 
+    # Extract the image URL from the callback data
+    data = query.data.split(':')
+    image_url = data[1] if len(data) > 1 else ''
+
     # Provide the link to share the image to Instagram
-    image_url = f'https://mighty-macaque-30f16fdc84f3.herokuapp.com/images/badge_1'
     share_link = f'instagram://story-camera?AssetPath={image_url}'
     
     await context.bot.send_message(
