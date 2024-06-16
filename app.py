@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, send_file
 from pymongo import MongoClient
-from dotenv import load_dotenv
 import os
 import base64
 from io import BytesIO
