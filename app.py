@@ -6,7 +6,7 @@ from io import BytesIO
 
 # Load environment variables from .env file
 
-if os.getenv('MONGODB_URI_prod') is None:
+if os.getenv('ENV') is None:
     from dotenv import load_dotenv
     load_dotenv()
 

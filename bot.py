@@ -21,7 +21,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-if os.getenv('MONGODB_URI_prod') is None:
+if os.getenv('ENV') is None:
     from dotenv import load_dotenv
     load_dotenv()
 
