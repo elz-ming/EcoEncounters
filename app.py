@@ -38,25 +38,6 @@ def get_image(filename):
     else:
         return jsonify({"error": "Image not found"}), 404
 
-@app.route('/share/<filename>')    
-def share(filename):
-    instagram_url = f'instagram://story-camera'
-
-    redirect_page = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="refresh" content="0; url={instagram_url}">
-        <title>Redirecting...</title>
-    </head>
-    <body>
-        <p>If you are not redirected automatically, follow this <a href="{instagram_url}">link to share on Instagram</a>.</p>
-    </body>
-    </html>
-    """
-    return render_template_string(redirect_page)
-
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
