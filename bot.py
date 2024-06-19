@@ -2,7 +2,6 @@
 # ===== Import ===== #
 # ================== #
 import os
-import base64
 from datetime import datetime, timezone, timedelta
 import logging
 from pymongo import MongoClient
@@ -61,15 +60,6 @@ assets_col = db.assets
 # ===== User Temp Data ===== #
 # ========================== #
 user_data = {}
-user_jobs = {}
-
-# ============================ #
-# ===== Helper Functions ===== #
-# ============================ #
-def decodeImage(image_data):
-    base64_data = image_data.split(",")[1]
-    return base64.b64decode(base64_data)
-
 
 # ======================== #
 # ===== User Journey ===== #
@@ -196,13 +186,13 @@ async def sendTopicStart(update: Update, context: ContextTypes.DEFAULT_TYPE, top
     )
 
     # Retrieve the image for the selected topic from MongoDB
-    image_doc = assets_col.find_one({"filename": f"{topic}"})
-    if image_doc and "data" in image_doc:
-        image_data = decodeImage(image_doc["data"])
+    topic_image = assets_col.find_one({"filename": f"{topic}"})
+    topic_image = topic_image['data']
 
+    if topic_image:
         message = await context.bot.send_photo(
             chat_id=user_id,
-            photo=image_data,
+            photo=topic_image,
             caption=f"You have chosen to walk the path of the {topic.replace('_', ' ').title()}.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("Next", callback_data=f'topic_start')]
@@ -277,20 +267,23 @@ async def sendQuestion(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     question_image = question['image']
-    if question_image:
-        image_data = decodeImage(question_image)   
-        await context.bot.send_photo(
+    if question_image: 
+        message = await context.bot.send_photo(
             chat_id=user_id,
-            photo=image_data,
+            photo=question_image,
             caption=text,
             reply_markup=reply_markup
         )
     else:
-        await context.bot.send_message(
+        message = await context.bot.send_message(
             chat_id=user_id,
             text=text,
             reply_markup=reply_markup
         )
+
+    # Store the initial message ID in the user_data
+    context.user_data['current_message_id'] = message.message_id
+    context.user_data['current_message_text'] = message.caption
 
 async def handleAnswer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -341,46 +334,68 @@ async def handleAnswer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         bold_start = "<b>" if option['option_id'] == selected_option_id else ""
         bold_end = "</b>" if option['option_id'] == selected_option_id else ""
         percentage = int((option['selected_today'] / total_attempts_today) * 100 if total_attempts_today > 0 else 0)
-        response_text += f"{selected_indicator} {bold_start}{option['text']} - {percentage}% selected this{bold_end}\n"
+        response_text += f"{bold_start}{percentage}% - {selected_indicator} {option['text']}{bold_end}\n"
     
-    response_text += f"\n{selected_option['explanation']}"
-
+    
     # Edit the original message to show the response
-    await query.edit_message_text(text=response_text, parse_mode=constants.ParseMode.HTML)
-
-    if 'explanation_image' in selected_option and selected_option['explanation_image']:
-        explanation_image_data = base64.b64decode(selected_option['explanation_image'].split(",")[1])
-        await context.bot.send_photo(
-            chat_id=user_id,
-            photo=explanation_image_data
-        )
-
-    # Provide a next button to move to the next question
-    await context.bot.send_message(
-        chat_id=user_id,
-        text="Click Next to continue to the next question.",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Next", callback_data=f'next_question')]
-        ])
+    await query.edit_message_caption(
+        caption=response_text, 
+        parse_mode=constants.ParseMode.HTML
     )
 
-async def handleNextQuestion(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    user_id = query.message.chat.id
+    # Send explanation images
+    explanation_image = selected_option.get('explanation_image')
+    if not is_correct and explanation_image:
+        await context.bot.send_photo(
+            chat_id=user_id,
+            photo=explanation_image
+        )
+
+    explanation = f"{selected_option['explanation']}"
+    await context.bot.send_message(
+            chat_id=user_id,
+            text=explanation
+        )
+
+    # Send the correct answer explanation image if the answer is incorrect
+    correct_option = next(option for option in question["options"] if option['correct'])
+    correct_explanation_image = correct_option.get('explanation_image')
+    if correct_explanation_image:
+        await context.bot.send_photo(
+            chat_id=user_id,
+            photo=correct_explanation_image
+        )
 
     # Move to the next question or end the set
-    question_index = context.user_data['current_question_index']
-    question_set = context.user_data['current_question_set']
-
     if question_index + 1 < len(question_set['questions']):
         context.user_data['current_question_index'] += 1
-        await sendQuestion(update, context)
+        message = await context.bot.send_message(
+            chat_id=user_id,
+            text="Next question coming up...",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Next", callback_data=f'next_question')]
+            ])
+        )
+        context.user_data['current_message_id'] = message.message_id
     else:
         await context.bot.send_message(
             chat_id=user_id,
             text="Congratulations! You have completed the question set."
         )
+
+async def handleNextQuestion(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    user_id = query.message.chat.id
+    previous_message_id = context.user_data.get('current_message_id')
+
+    await context.bot.delete_message(
+        chat_id=user_id, 
+        message_id=previous_message_id
+    )
+
+    await sendQuestion(update, context)
+
 async def reset_statistics(context: ContextTypes.DEFAULT_TYPE):
     users_col.update_many({}, {"$set": {"correct_today": 0, "incorrect_today": 0}})
     question_sets_col.update_many({}, {"$set": {"questions.$[].correct_today": 0, "questions.$[].incorrect_today": 0, "questions.$[].options.$[].selected_today": 0}})
