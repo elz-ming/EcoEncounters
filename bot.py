@@ -178,6 +178,7 @@ async def sendTopicStart(update: Update, context: ContextTypes.DEFAULT_TYPE, top
        "Digital Badges will be earned through daily interactions with the game. Let’s see how good you are in completing this quiz amongst others! 🏆💯"
     )
 
+    badge_image = assets_col.find_one({"filename": "badge_silhouette"}).get('data')
     # Send an image (update with the actual image path or URL)
     await context.bot.send_photo(
         chat_id=user_id,
@@ -186,8 +187,7 @@ async def sendTopicStart(update: Update, context: ContextTypes.DEFAULT_TYPE, top
     )
 
     # Retrieve the image for the selected topic from MongoDB
-    topic_image = assets_col.find_one({"filename": f"{topic}"})
-    topic_image = topic_image['data']
+    topic_image = assets_col.find_one({"filename": f"{topic}"}).get('data')
 
     if topic_image:
         message = await context.bot.send_photo(

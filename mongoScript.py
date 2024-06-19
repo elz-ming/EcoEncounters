@@ -16,7 +16,7 @@ MONGO_URI = f"mongodb+srv://{MONGO_USER}:{MONGO_PWD}@{MONGO_CLUSTER}/?retryWrite
 client = MongoClient(MONGO_URI)
 MONGO_DB = os.getenv('MONGO_DB')
 db = client[MONGO_DB]
-asset_col = db.assets
+assets_col = db.assets
 question_sets_col = db.question_sets
 
 def store_image(question_id, image_path):
@@ -39,15 +39,30 @@ def store_option_image(question_id, option_id, image_path):
         )
     print(f"Option {option_id} in question {question_id} image updated successfully.")
 
-def store_asset(image_name, image_path):
+def store_assets(image_name, image_path):
     with open(image_path, 'rb') as image_file:
         image_data = image_file.read()
         binary_image = Binary(image_data)
-        asset_col.update_one(
+        assets_col.update_one(
             {"filename": image_name,},
             {"$set": {"data": binary_image}}
         )
     print(f"Image {image_name} in asset image updated successfully.")
+
+def insert_assets(file_path, filename, filetype):
+    with open(file_path, 'rb') as file:
+        binary_data = Binary(file.read())
+    
+    asset_document = {
+        "filename": filename,
+        "filetype": filetype,
+        "data": binary_data
+    }
+    
+    assets_col.insert_one(asset_document)
+    print(f"Inserted {filename} into the assets collection.")
+
+
 
 # # Example usage
 # store_image("3", "asset/asset-telebanner-09.png")
@@ -55,4 +70,10 @@ def store_asset(image_name, image_path):
 # # Example usage
 # store_option_image(question_id='3', option_id='1', image_path="asset/asset-telebanner-10.png")
 
-store_asset("mighty_macaque", image_path="asset/asset-telebanner-02.png")
+# # Example usage
+# store_assets("badge_silhouette", image_path="asset/asset-telebanner-02.png")
+
+# # Example usage
+# insert_assets('asset/badge_1star.png', 'badge_1star', 'image/png')
+# insert_assets('asset/badge_2star.png', 'badge_2star', 'image/png')
+# insert_assets('asset/badge_3star.png', 'badge_3star', 'image/png')
