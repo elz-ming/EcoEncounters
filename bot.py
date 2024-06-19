@@ -97,6 +97,8 @@ async def handleStart(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
     context.user_data['selected_topic'] = None
 
+    context.user_data['correct_answers'] = 0
+
     await sendTopicChoice(update, context)
 
 # 2. Continuing from the /start button, a message to select game choice and inform the existence of /mode button
@@ -312,7 +314,7 @@ async def handleAnswer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             {"$inc": {"questions.$[question].correct_today": 1}},
             array_filters=[{"question.question": question_text}]
         )
-        context.user_data['correct_answers'] = context.user_data.get('correct_answers', 0) + 1
+        context.user_data['correct_answers'] = context.user_data.get('correct_answers') + 1
     else:
         users_col.update_one({"_id": user_id}, {"$inc": {"incorrect_today": 1}})
         question_sets_col.update_one(
@@ -379,9 +381,23 @@ async def handleAnswer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         context.user_data['current_message_id'] = message.message_id
     else:
-        await context.bot.send_message(
+        correct_answers = context.user_data.get('correct_answers')
+
+        badge_filename = "badge_1star"
+        caption = "Great start! You earn yourself an EcoEnthusiast badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
+
+        if correct_answers == 3:
+            badge_filename = "badge_3star"
+            caption = "Awesome! You have answered 3 out of 3 questions perfectly. You earn yourself an EcoExperts badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
+        elif correct_answers == 2:
+            badge_filename = "badge_2star"
+            caption = "Excellent work! You have answered 2 out of 3 questions correctly. You earn yourself an EcoExplorer badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
+
+        badge = assets_col.find_one({"filename": badge_filename})
+        await context.bot.send_photo(
             chat_id=user_id,
-            text="Congratulations! You have completed the question set."
+            photo=badge['data'],
+            caption=caption
         )
 
 async def handleNextQuestion(update: Update, context: ContextTypes.DEFAULT_TYPE):
