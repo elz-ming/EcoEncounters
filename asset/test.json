@@ -1,0 +1,32 @@
+{
+  "topic": "mighty_macaque",
+  "difficulty": "Easy",
+  "questions": [
+    {
+      "question": "You are hiking along the MacRitchie Trail and spotted a macaque nibbling on something. What do you think macaques feed on? 🌿🍃🐒🚶🏽",
+      "image": "data:image/png;base64,...",
+      "options": [
+        {
+          "text": "Kang Kong/ Water Spinach",
+          "correct": false,
+          "explanation": "Oops, kang kong sambal belachan stays on your dinner table! The macaques' natural diet is widely varied, it includes insects, fruits, flowers, and even lizards, snakes and crabs. 🌼🍎🪲🦎🐒 🌳🚶🏽"
+        },
+        {
+          "text": "Dried leaves only.",
+          "correct": false,
+          "explanation": "Oops not quite! Macaques are leaf-ing the life and have a natural diet that is widely varied. They feed on insects, fruits, flowers, and even lizards, snakes and crabs. 🌼🍎🪲🦎🐒 🌳🚶🏽"
+        },
+        {
+          "text": "Fruits, flowers, and even small insects.",
+          "correct": true,
+          "explanation": "Bingo! 🏆 The macaques' natural diet is widely varied, it includes insects, fruits, flowers, and even lizards, snakes and crabs. During fruiting season, you may see more macaques foraging near fruit trees. 🌼🍎🪲🦎🐒 🌳🚶🏽"
+        },
+        {
+          "text": "Banana Ice-cream",
+          "correct": false,
+          "explanation": "Oops not quite! Macaques are leaf-ing the life and have a natural diet that is widely varied. They feed on insects, fruits, flowers, and even lizards, snakes and crabs. 🌼🍎🪲🦎🐒 🌳🚶🏽"
+        }
+      ]
+    }
+  ]
+}
