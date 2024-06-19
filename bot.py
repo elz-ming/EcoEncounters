@@ -182,7 +182,7 @@ async def sendTopicStart(update: Update, context: ContextTypes.DEFAULT_TYPE, top
     # Send an image (update with the actual image path or URL)
     await context.bot.send_photo(
         chat_id=user_id,
-        photo='asset/badge_silhouette.png',
+        photo=badge_image,
         caption=badge_text
     )
 
@@ -312,6 +312,7 @@ async def handleAnswer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             {"$inc": {"questions.$[question].correct_today": 1}},
             array_filters=[{"question.question": question_text}]
         )
+        context.user_data['correct_answers'] = context.user_data.get('correct_answers', 0) + 1
     else:
         users_col.update_one({"_id": user_id}, {"$inc": {"incorrect_today": 1}})
         question_sets_col.update_one(
