@@ -3,28 +3,125 @@
   "difficulty": "Easy",
   "questions": [
     {
+      "question_id": "1",
       "question": "You are hiking along the MacRitchie Trail and spotted a macaque nibbling on something. What do you think macaques feed on? 🌿🍃🐒🚶🏽",
-      "image": "data:image/png;base64,...",
+      "image": "",
+      "correct_today": 0,
+      "incorrect_today": 0,
       "options": [
         {
+          "option_id": "1",
           "text": "Kang Kong/ Water Spinach",
           "correct": false,
-          "explanation": "Oops, kang kong sambal belachan stays on your dinner table! The macaques' natural diet is widely varied, it includes insects, fruits, flowers, and even lizards, snakes and crabs. 🌼🍎🪲🦎🐒 🌳🚶🏽"
+          "explanation": "Oops, kang kong sambal belachan stays on your dinner table! The macaques' natural diet is widely varied, it includes insects, fruits, flowers, and even lizards, snakes and crabs.🌼🍎🪲🦎🐒 🌳🚶🏽",
+          "selected_today": 0,
+          "explanation_image": ""
         },
         {
+          "option_id": "2",
           "text": "Dried leaves only.",
           "correct": false,
-          "explanation": "Oops not quite! Macaques are leaf-ing the life and have a natural diet that is widely varied. They feed on insects, fruits, flowers, and even lizards, snakes and crabs. 🌼🍎🪲🦎🐒 🌳🚶🏽"
+          "explanation": "Oops not quite! Macaques are leaf-ing the life and have a natural diet that is widely varied. They feed on insects, fruits, flowers, and even lizards, snakes and crabs.🌼🍎🪲🦎🐒 🌳🚶🏽",
+          "selected_today": 0,
+          "explanation_image": ""
         },
         {
+          "option_id": "3",
           "text": "Fruits, flowers, and even small insects.",
           "correct": true,
-          "explanation": "Bingo! 🏆 The macaques' natural diet is widely varied, it includes insects, fruits, flowers, and even lizards, snakes and crabs. During fruiting season, you may see more macaques foraging near fruit trees. 🌼🍎🪲🦎🐒 🌳🚶🏽"
+          "explanation": "Bingo! 🏆 The macaques' natural diet is widely varied, it includes insects, fruits, flowers, and even lizards, snakes and crabs. During fruiting season, you may see more macaques foraging near fruit trees. 🌼🍎🪲🦎🐒 🌳🚶🏽",
+          "selected_today": 0,
+          "explanation_image": ""
         },
         {
+          "option_id": "4",
           "text": "Banana Ice-cream",
           "correct": false,
-          "explanation": "Oops not quite! Macaques are leaf-ing the life and have a natural diet that is widely varied. They feed on insects, fruits, flowers, and even lizards, snakes and crabs. 🌼🍎🪲🦎🐒 🌳🚶🏽"
+          "explanation": "Oops not quite banana ice-cream! Macaques have a natural diet that is widely varied. They feed on insects, fruits, flowers, and even lizards, snakes and crabs.🌼🍎🪲🦎🐒 🌳🚶🏽",
+          "selected_today": 0,
+          "explanation_image": ""
+        }
+      ]
+    },
+    {
+      "question_id": "2",
+      "question": "Bingo! 🏆 The macaques' natural diet is widely varied, it includes insects, fruits, flowers, and even lizards, snakes and crabs. During fruiting season, you may see more macaques foraging near fruit trees. 🌼🍎🪲🦎🐒 🌳🚶🏽",
+      "image": "",
+      "correct_today": 0,
+      "incorrect_today": 0,
+      "options": [
+        {
+          "option_id": "1",
+          "text": "Go close for a photo",
+          "correct": false,
+          "explanation": "Oh snap, you forgot to turn off the camera flash and got too close! 📷💥 The macaques are startled. Walk calmly and put your phone/camera away. 🚶🏽🎒🌿🍃🐒",
+          "selected_today": 0,
+          "explanation_image": ""
+        },
+        {
+          "option_id": "2",
+          "text": "Calmly walk by",
+          "correct": true,
+          "explanation": "Excellent choice! 🏆 If you need to pass by a lone macaque or a troop of macaques, calmly walk by and keep at least 2 to 3m distance away from them. 🚶🏽🌿🍃🐒🐒🐒",
+          "selected_today": 0,
+          "explanation_image": ""
+        },
+        {
+          "option_id": "3",
+          "text": "Maintain eye contact",
+          "correct": false,
+          "explanation": "Yikes! You maintained eye contact with the macaques. They raised their eyebrows, thinking you are being aggressive and threatening. Calmly walk away and avoid eye contact. 🚶🏽😎🌿🍃🐒",
+          "selected_today": 0,
+          "explanation_image": ""
+        },
+        {
+          "option_id": "4",
+          "text": "Smile at them",
+          "correct": false,
+          "explanation": "Oh no! You flashed a beautiful smile at the macaques. They returned a fearful and anxious expression, and did not smile back at you. Calmly walk away and avoid smiling back. 🚶🏽😶🌿🍃🐒",
+          "selected_today": 0,
+          "explanation_image": ""
+        }
+      ]
+    },
+    {
+      "question_id": "3",
+      "question": "Ready for a quick bite? You feel hungry and took out a sandwich from a plastic bag. The macaques stare on curiously. What would you do? 🚶🏽🥪🍃🐒",
+      "image": "",
+      "correct_today": 0,
+      "incorrect_today": 0,
+      "options": [
+        {
+          "option_id": "1",
+          "text": "Hide sandwich",
+          "correct": true,
+          "explanation": "Yes, never feed macaques and hide your food away from sight! 🏆 Avoid plastic bags in parks and nature reserves as macaques associate them with food. If you are holding an object that is attracting it, hide it or dispose it properly in a bin.🚶🏽🎒🌿🍃🙈",
+          "selected_today": 0,
+          "explanation_image": ""
+        },
+        {
+          "option_id": "2",
+          "text": "Feed the macaque",
+          "correct": false,
+          "explanation": "Oops! Never feed the monkey as the forests provides enough food. Feeding draws them out to human areas. Vehicles have injured and killed many macaques waiting to be fed along the roads.🧍🏻🚫💥🌿🍃🙈",
+          "selected_today": 0,
+          "explanation_image": ""
+        },
+        {
+          "option_id": "3",
+          "text": "Turn away and run",
+          "correct": false,
+          "explanation": "Oops! Do not turn away and run. Hide your food and calmly walk away and avoid eye contact. 🚶🏽🎒🌿🍃🙈",
+          "selected_today": 0,
+          "explanation_image": ""
+        },
+        {
+          "option_id": "4",
+          "text": "Hit the macaque",
+          "correct": false,
+          "explanation": "Uh oh! Never try to hit the macaque. Calmly walk away and avoid eye contact. 🚶🏽🚫💥🌿🍃🙈",
+          "selected_today": 0,
+          "explanation_image": ""
         }
       ]
     }

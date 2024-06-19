@@ -274,13 +274,23 @@ async def sendQuestion(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
         f"""Question {question_index + 1} of {len(question_set['questions'])}\n"""
         f"""{question_text}"""
-    )   
-
-    await context.bot.send_message(
-        chat_id=user_id,
-        text=text,
-        reply_markup=reply_markup
     )
+
+    question_image = question['image']
+    if question_image:
+        image_data = decodeImage(question_image)   
+        await context.bot.send_photo(
+            chat_id=user_id,
+            photo=image_data,
+            caption=text,
+            reply_markup=reply_markup
+        )
+    else:
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=text,
+            reply_markup=reply_markup
+        )
 
 async def handleAnswer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -309,7 +319,6 @@ async def handleAnswer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             {"$inc": {"questions.$[question].correct_today": 1}},
             array_filters=[{"question.question": question_text}]
         )
-        feedback="That is correct!"
     else:
         users_col.update_one({"_id": user_id}, {"$inc": {"incorrect_today": 1}})
         question_sets_col.update_one(
@@ -317,7 +326,6 @@ async def handleAnswer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             {"$inc": {"questions.$[question].incorrect_today": 1}},
             array_filters=[{"question.question": question_text}]
         )
-        feedback="Oh no! That is incorrect!"
 
     # Retrieve updated question data
     updated_question = question_sets_col.find_one({"questions.question": question_text}, {"questions.$": 1})
@@ -327,7 +335,7 @@ async def handleAnswer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total_attempts_today = updated_question['questions'][0]['correct_today'] + updated_question['questions'][0]['incorrect_today']
 
     # Format the response message
-    response_text = f"Question {question_index + 1} of {len(question_set['questions'])}\n{question['question']}\n\n"
+    response_text = f"Encounter #{question_index + 1} of {len(question_set['questions'])}\n{question['question']}\n\n"
     for option in updated_options:
         selected_indicator = "✅" if option['correct'] else "❌"
         bold_start = "<b>" if option['option_id'] == selected_option_id else ""
@@ -335,12 +343,36 @@ async def handleAnswer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         percentage = int((option['selected_today'] / total_attempts_today) * 100 if total_attempts_today > 0 else 0)
         response_text += f"{selected_indicator} {bold_start}{option['text']} - {percentage}% selected this{bold_end}\n"
     
-    response_text += f"\n{feedback}"
+    response_text += f"\n{selected_option['explanation']}"
 
     # Edit the original message to show the response
     await query.edit_message_text(text=response_text, parse_mode=constants.ParseMode.HTML)
 
+    if 'explanation_image' in selected_option and selected_option['explanation_image']:
+        explanation_image_data = base64.b64decode(selected_option['explanation_image'].split(",")[1])
+        await context.bot.send_photo(
+            chat_id=user_id,
+            photo=explanation_image_data
+        )
+
+    # Provide a next button to move to the next question
+    await context.bot.send_message(
+        chat_id=user_id,
+        text="Click Next to continue to the next question.",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("Next", callback_data=f'next_question')]
+        ])
+    )
+
+async def handleNextQuestion(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    user_id = query.message.chat.id
+
     # Move to the next question or end the set
+    question_index = context.user_data['current_question_index']
+    question_set = context.user_data['current_question_set']
+
     if question_index + 1 < len(question_set['questions']):
         context.user_data['current_question_index'] += 1
         await sendQuestion(update, context)
@@ -349,7 +381,6 @@ async def handleAnswer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chat_id=user_id,
             text="Congratulations! You have completed the question set."
         )
-
 async def reset_statistics(context: ContextTypes.DEFAULT_TYPE):
     users_col.update_many({}, {"$set": {"correct_today": 0, "incorrect_today": 0}})
     question_sets_col.update_many({}, {"$set": {"questions.$[].correct_today": 0, "questions.$[].incorrect_today": 0, "questions.$[].options.$[].selected_today": 0}})
@@ -403,7 +434,8 @@ def main():
     application.add_handler(CommandHandler("start", handleStart))
     application.add_handler(CallbackQueryHandler(handleTopicChoice, pattern='^(mighty_macaque|pigeon_plight)$'))
     application.add_handler(CallbackQueryHandler(handleTopicStart, pattern='topic_start'))
-    # application.add_handler(CallbackQueryHandler(handleAnswer, pattern='^(.*)$'))
+    application.add_handler(CallbackQueryHandler(handleAnswer, pattern='^\d+$'))
+    application.add_handler(CallbackQueryHandler(handleNextQuestion, pattern='^next_question$'))
 
     # Schedule daily reset at 10 AM UTC
     job_queue = application.job_queue
