@@ -19,21 +19,21 @@ db = client[MONGO_DB]
 assets_col = db.assets
 question_sets_col = db.question_sets
 
-def store_image(question_id, image_path):
+def store_image(difficulty, question_id, image_path):
     with open(image_path, 'rb') as image_file:
         image_data = image_file.read()
         question_sets_col.update_one(
-            {"questions.question_id": question_id},
+            {"difficulty": difficulty,"questions.question_id": question_id},
             {"$set": {"questions.$.image": Binary(image_data)}}
         )
     print(f"Question {question_id} image updated successfully.")
 
-def store_option_image(question_id, option_id, image_path):
+def store_option_image(difficulty, question_id, option_id, image_path):
     with open(image_path, 'rb') as image_file:
         image_data = image_file.read()
         binary_image = Binary(image_data)
         question_sets_col.update_one(
-            {"questions.question_id": question_id, "questions.options.option_id": option_id},
+            {"difficulty": difficulty, "questions.question_id": question_id, "questions.options.option_id": option_id},
             {"$set": {"questions.$[question].options.$[option].explanation_image": binary_image}},
             array_filters=[{"question.question_id": question_id}, {"option.option_id": option_id}]
         )
@@ -65,10 +65,19 @@ def insert_assets(file_path, filename, filetype):
 
 
 # # Example usage
-# store_image("3", "asset/asset-telebanner-09.png")
+# store_image(difficulty="Intermediate", question_id="1", image_path="asset/asset-telebanner-03.png")
+# store_image(difficulty="Intermediate", question_id="2", image_path="asset/asset-telebanner-09.png")
+# store_image(difficulty="Intermediate", question_id="3", image_path="asset/asset-telebanner-02.png")
 
 # # Example usage
-# store_option_image(question_id='3', option_id='1', image_path="asset/asset-telebanner-10.png")
+# store_option_image(difficulty="Intermediate", question_id='1', option_id='1', image_path="asset/asset-telebanner-05.png")
+# store_option_image(difficulty="Intermediate", question_id='1', option_id='3', image_path="asset/asset-telebanner-06.png")
+# store_option_image(difficulty="Intermediate", question_id='1', option_id='4', image_path="asset/asset-telebanner-07.png")
+# store_option_image(difficulty="Intermediate", question_id='1', option_id='2', image_path="asset/asset-telebanner-04.png")
+
+# store_option_image(difficulty="Intermediate", question_id='2', option_id='1', image_path="asset/asset-telebanner-10.png")
+
+# store_option_image(difficulty="Intermediate", question_id='3', option_id='4', image_path="asset/asset-telebanner-11.png")
 
 # # Example usage
 # store_assets("badge_silhouette", image_path="asset/asset-telebanner-02.png")

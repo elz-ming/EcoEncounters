@@ -56,10 +56,11 @@ question_sets_col = db.question_sets
 stats_col = db.stats
 assets_col = db.assets
 
-# ========================== #
-# ===== User Temp Data ===== #
-# ========================== #
-user_data = {}
+# ============================ #
+# ===== Helper Functions ===== #
+# ============================ #
+def formatText(text):
+    return text.replace("!", "\\!").replace(".", "\\.").replace("(", "\\(").replace(")", "\\)").replace("#", "\\#").replace("-", "\\-")
 
 # ======================== #
 # ===== User Journey ===== #
@@ -70,7 +71,6 @@ async def handleStart(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     """Handle the /start command."""
     user_id = update.effective_chat.id
     user = users_col.find_one({"_id": user_id})
-
     if not user:
         users_col.insert_one({
             "_id": user_id,
@@ -80,23 +80,15 @@ async def handleStart(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             "incorrect_today": 0,
             "badge": ""
         })
-        user_data[user_id] = {"stage": 1, "correct": 0, "incorrect": 0}
-
     else:
-        user_data[user_id] = {
-            "stage": 1, 
-            "correct_today": user["correct_today"], 
-            "incorrect_today": user["incorrect_today"]
-        }
+        context.user_data['correct_answers'] = user["correct_today"]
+        context.user_data['incorrect_answers'] = user["incorrect_today"]
 
     # Initialize context variables
     context.user_data['current_message_id'] = None
     context.user_data['current_message_text'] = None
-
     context.user_data['additional_message_text'] = None
-
     context.user_data['selected_topic'] = None
-
     context.user_data['correct_answers'] = 0
     context.user_data['incorrect_answers'] = 0
 
@@ -116,7 +108,7 @@ async def sendTopicChoice(update: Update, context: ContextTypes.DEFAULT_TYPE):
         emoji = "🐔"
 
     text = (
-        """Pick your EcoEncounter today!\n"""
+        """*Pick your EcoEncounter today!*\n"""
         f"""{emoji} Mode: {difficulty} {emoji}\n"""
         """Use /mode to adjust difficulty\n"""
     )
@@ -124,13 +116,16 @@ async def sendTopicChoice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if additional_text:
         text = additional_text + text
 
+    text = formatText(text)
+
     message = await context.bot.send_message(
         chat_id=user_id,
         text=text,
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("🐒 Mighty Macaque", callback_data='mighty_macaque')],
             [InlineKeyboardButton("🕊️ Pigeon Plight", callback_data='pigeon_plight')]
-        ])
+        ]),
+        parse_mode=constants.ParseMode.MARKDOWN_V2
     )
 
     if previous_message_id:
@@ -138,33 +133,38 @@ async def sendTopicChoice(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Store the initial message ID in the user_data
     context.user_data['current_message_id'] = message.message_id
-    context.user_data['current_message_text'] = message.text
+    context.user_data['current_message_text'] = text
 
+# 3. After the user selects Mighty Macaque or Pigeon Plight, the following is executed
 async def handleTopicChoice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    user_id = query.message.chat.id
     topic = query.data
+    user_id = update.effective_chat.id
+    user = users_col.find_one({"_id": user_id})
+    difficulty = user["difficulty"]
 
     # Check if the selected topic is available
-    is_available = question_sets_col.find_one({"topic": topic}) is not None
+    is_available = question_sets_col.find_one({"topic": topic, "difficulty": difficulty}) is not None
     
     if not is_available:
-        text=f"Sorry, {topic.replace('_', ' ').title()} is unavailable now. Please select another mode.\n\n"
+        text=f"Sorry, {topic.replace('_', ' ').title()} ({difficulty}) is unavailable now. Please select another mode.\n\n"
 
         # Store the add on message text in the user_data
         context.user_data['additional_message_text'] = text
 
-        # Resend the game choice message
+        # Resend the topic choice message
         await sendTopicChoice(update, context)
 
     else:
-        text=f"\n\nYou've selected: {topic.replace('_', ' ').title()}\n\n"
+        text=f"\nYou've selected: {topic.replace('_', ' ').title()}\n\n"
+        text=formatText(text)
 
         # Store the add on message text in the user_data
         context.user_data['selected_topic'] = topic
         context.user_data['additional_message_text'] = text
 
+        # Start the topic
         await sendTopicStart(update, context, topic)
 
 async def sendTopicStart(update: Update, context: ContextTypes.DEFAULT_TYPE, topic: str):
@@ -173,20 +173,19 @@ async def sendTopicStart(update: Update, context: ContextTypes.DEFAULT_TYPE, top
     previous_message_text = context.user_data.get('current_message_text')
     additional_text = context.user_data.get('additional_message_text')
 
-    text = previous_message_text + additional_text
-
     if previous_message_id and additional_text:
-        await context.bot.edit_message_text(
-                chat_id=user_id,
-                message_id=previous_message_id,
-                text=text
-            )
+        text = previous_message_text + additional_text
 
-    badge_text = (
-       "Digital Badges will be earned through daily interactions with the game. Let’s see how good you are in completing this quiz amongst others! 🏆💯"
-    )
-
+    await context.bot.edit_message_text(
+            chat_id=user_id,
+            message_id=previous_message_id,
+            text=text,
+            parse_mode=constants.ParseMode.MARKDOWN_V2
+        )
+    
     badge_image = assets_col.find_one({"filename": "badge_silhouette"}).get('data')
+    badge_text = "Digital Badges will be earned through daily interactions with the game. Let’s see how good you are in completing this quiz amongst others! 🏆💯"
+
     # Send an image (update with the actual image path or URL)
     await context.bot.send_photo(
         chat_id=user_id,
@@ -270,9 +269,11 @@ async def sendQuestion(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     text = (
-        f"""Question {question_index + 1} of {len(question_set['questions'])}\n"""
+        f"""*__Encounter #{question_index + 1} of {len(question_set['questions'])}__*\n"""
         f"""{question_text}"""
     )
+
+    text = formatText(text)
 
     question_image = question['image']
     if question_image: 
@@ -280,13 +281,15 @@ async def sendQuestion(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chat_id=user_id,
             photo=question_image,
             caption=text,
-            reply_markup=reply_markup
+            reply_markup=reply_markup,
+            parse_mode=constants.ParseMode.MARKDOWN_V2
         )
     else:
         message = await context.bot.send_message(
             chat_id=user_id,
             text=text,
-            reply_markup=reply_markup
+            reply_markup=reply_markup,
+            parse_mode=constants.ParseMode.MARKDOWN_V2
         )
 
     # Store the initial message ID in the user_data
@@ -392,28 +395,25 @@ async def handleAnswer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         incorrect_answers = context.user_data.get('incorrect_answers')
 
         badge_filename = "badge_1star"
-        caption = "Great start! You earn yourself an EcoEnthusiast badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
+        caption = "*Great start!* You earn yourself an EcoEnthusiast badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
 
         if correct_answers == 3:
             badge_filename = "badge_3star"
-            caption = "Awesome! You have answered 3 out of 3 questions perfectly. You earn yourself an EcoExperts badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
+            caption = "*Awesome! You have answered 3 out of 3 questions perfectly.* You earn yourself an EcoExperts badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
         elif correct_answers == 2:
             badge_filename = "badge_2star"
-            caption = "Excellent work! You have answered 2 out of 3 questions correctly. You earn yourself an EcoExplorer badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
+            caption = "*Excellent work! You have answered 2 out of 3 questions correctly.* You earn yourself an EcoExplorer badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
+
+        caption = formatText(caption)
 
         badge = assets_col.find_one({"filename": badge_filename})
         await context.bot.send_photo(
             chat_id=user_id,
             photo=badge['data'],
-            caption=caption
+            caption=caption,
+            parse_mode=constants.ParseMode.MARKDOWN_V2
         )
-
-        # Update user's correct_today and incorrect_today values
-        users_col.update_one(
-            {"_id": user_id},
-            {"$inc": {"correct_today": correct_answers, "incorrect_today": incorrect_answers}}
-        )
-
+        
 async def handleNextQuestion(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
