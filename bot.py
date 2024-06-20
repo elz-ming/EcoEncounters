@@ -71,16 +71,22 @@ async def handleStart(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     """Handle the /start command."""
     user_id = update.effective_chat.id
     user = users_col.find_one({"_id": user_id})
+    current_time = datetime.now(timezone.utc)
+    
     if not user:
         users_col.insert_one({
             "_id": user_id,
             "username": update.effective_chat.username,
-            "difficulty": "Easy",
             "correct_today": 0,
             "incorrect_today": 0,
-            "badge": ""
+            "last_login": current_time
         })
     else:
+        users_col.update_one(
+            {"_id": user_id},
+            {"$set": {"last_login": current_time}}
+        )
+
         context.user_data['correct_answers'] = user["correct_today"]
         context.user_data['incorrect_answers'] = user["incorrect_today"]
 
@@ -97,20 +103,11 @@ async def handleStart(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 # 2. Continuing from the /start button, a message to select game choice and inform the existence of /mode button
 async def sendTopicChoice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_chat.id
-    user = users_col.find_one({"_id": user_id})
-    difficulty = user["difficulty"]
     previous_message_id = context.user_data.get('current_message_id')
     additional_text = context.user_data.get('additional_message_text')
 
-    if difficulty == "Easy":
-        emoji = "🐥"
-    elif difficulty == "Intermediate":
-        emoji = "🐔"
-
     text = (
         """*Pick your EcoEncounter today!*\n"""
-        f"""{emoji} Mode: {difficulty} {emoji}\n"""
-        """Use /mode to adjust difficulty\n"""
     )
 
     if additional_text:
@@ -123,7 +120,6 @@ async def sendTopicChoice(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text=text,
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("🐒 Mighty Macaque", callback_data='mighty_macaque')],
-            [InlineKeyboardButton("🕊️ Pigeon Plight", callback_data='pigeon_plight')]
         ]),
         parse_mode=constants.ParseMode.MARKDOWN_V2
     )
@@ -141,40 +137,13 @@ async def handleTopicChoice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     topic = query.data
     user_id = update.effective_chat.id
-    user = users_col.find_one({"_id": user_id})
-    difficulty = user["difficulty"]
-
-    # Check if the selected topic is available
-    is_available = question_sets_col.find_one({"topic": topic, "difficulty": difficulty}) is not None
-    
-    if not is_available:
-        text=f"Sorry, {topic.replace('_', ' ').title()} ({difficulty}) is unavailable now. Please select another mode.\n\n"
-
-        # Store the add on message text in the user_data
-        context.user_data['additional_message_text'] = text
-
-        # Resend the topic choice message
-        await sendTopicChoice(update, context)
-
-    else:
-        text=f"\nYou've selected: {topic.replace('_', ' ').title()}\n\n"
-        text=formatText(text)
-
-        # Store the add on message text in the user_data
-        context.user_data['selected_topic'] = topic
-        context.user_data['additional_message_text'] = text
-
-        # Start the topic
-        await sendTopicStart(update, context, topic)
-
-async def sendTopicStart(update: Update, context: ContextTypes.DEFAULT_TYPE, topic: str):
-    user_id = update.effective_chat.id
     previous_message_id = context.user_data.get('current_message_id')
     previous_message_text = context.user_data.get('current_message_text')
-    additional_text = context.user_data.get('additional_message_text')
 
-    if previous_message_id and additional_text:
-        text = previous_message_text + additional_text
+    context.user_data['selected_topic'] = topic
+
+    text=f"\nYou've selected: {topic.replace('_', ' ').title()}\n\n"
+    text=previous_message_text + formatText(text)
 
     await context.bot.edit_message_text(
             chat_id=user_id,
@@ -182,6 +151,12 @@ async def sendTopicStart(update: Update, context: ContextTypes.DEFAULT_TYPE, top
             text=text,
             parse_mode=constants.ParseMode.MARKDOWN_V2
         )
+
+    # Start the topic
+    await sendTopicStart(update, context, topic)
+
+async def sendTopicStart(update: Update, context: ContextTypes.DEFAULT_TYPE, topic: str):
+    user_id = update.effective_chat.id    
     
     badge_image = assets_col.find_one({"filename": "badge_silhouette"}).get('data')
     badge_text = "Digital Badges will be earned through daily interactions with the game. Let’s see how good you are in completing this quiz amongst others! 🏆💯"
@@ -225,30 +200,22 @@ async def handleTopicStart(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 message_id=previous_message_id,
                 caption=text
             )
-
+        
     # Proceed to send the question set for the selected topic
     await sendQuestionSet(update, context)
 
 async def sendQuestionSet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_chat.id
     user = users_col.find_one({"_id": user_id})
-    difficulty = user["difficulty"]
 
     # Retrieve the selected topic from the user's data
     topic = context.user_data['selected_topic']
     
-    # Retrieve a random question set for the selected difficulty
+    # Retrieve a random question set
     question_set = question_sets_col.aggregate([
-        {"$match": {"difficulty": difficulty, "topic": topic}},
+        {"$match": {"topic": topic}},
         {"$sample": {"size": 1}}
     ]).next()
-
-    if not question_set:
-        await context.bot.send_message(
-            chat_id=user_id,
-            text="Sorry, no questions are available for the selected difficulty."
-        )
-        return
 
     # Store the current question set in the user_data
     context.user_data['current_question_set'] = question_set
@@ -390,19 +357,19 @@ async def handleAnswer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ])
         )
         context.user_data['current_message_id'] = message.message_id
+
     else:
         correct_answers = context.user_data.get('correct_answers')
-        incorrect_answers = context.user_data.get('incorrect_answers')
-
         badge_filename = "badge_1star"
         caption = "*Great start!* You earn yourself an EcoEnthusiast badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
 
-        if correct_answers == 3:
+        if correct_answers == 4:
             badge_filename = "badge_3star"
-            caption = "*Awesome! You have answered 3 out of 3 questions perfectly.* You earn yourself an EcoExperts badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
-        elif correct_answers == 2:
+            caption = "*Awesome! You have answered 4 out of 4 questions perfectly.* You earn yourself an EcoExperts badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
+
+        elif correct_answers == 2 or correct_answers == 3:
             badge_filename = "badge_2star"
-            caption = "*Excellent work! You have answered 2 out of 3 questions correctly.* You earn yourself an EcoExplorer badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
+            caption = "*Excellent work! You got half or more questions correctly.* You earn yourself an EcoExplorer badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
 
         caption = formatText(caption)
 
@@ -427,49 +394,6 @@ async def handleNextQuestion(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     await sendQuestion(update, context)
 
-async def handleMode(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_chat.id
-
-    # If the topic has not been selected, allow changing difficulty
-    if context.user_data.get('selected_topic') is None:
-        await changeMode(update, context)
-    else:
-        # If the topic has been selected, allow changing difficulty but send back to topic selection
-        context.user_data['change_mode_return_to_topic'] = True
-        await changeMode(update, context)
-
-async def changeMode(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_chat.id
-    message = await context.bot.send_message(
-        chat_id=user_id,
-        text="Select difficulty:",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Easy", callback_data='Easy')],
-            [InlineKeyboardButton("Intermediate", callback_data='Intermediate')],
-        ])
-    )
-
-    context.user_data['current_message_id'] = message.message_id
-
-async def setMode(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    user_id = query.message.chat.id
-    difficulty = query.data
-    previous_message_id = context.user_data['current_message_id']
-
-    users_col.update_one(
-        {"_id": user_id},
-        {"$set": {"difficulty": difficulty}}
-    )
-
-    if previous_message_id:
-        await context.bot.delete_message(chat_id=user_id, message_id=previous_message_id)
-    
-    context.user_data.clear()
-    # Redirect to topic selection
-    await handleStart(update, context)
-
 async def reset_statistics(context: ContextTypes.DEFAULT_TYPE):
     users_col.update_many({}, {"$set": {"correct_today": 0, "incorrect_today": 0}})
     question_sets_col.update_many({}, {"$set": {"questions.$[].correct_today": 0, "questions.$[].incorrect_today": 0, "questions.$[].options.$[].selected_today": 0}})
@@ -481,13 +405,11 @@ def main():
 
     # Add handlers for the /start command and callbacks
     application.add_handler(CommandHandler("start", handleStart))
-    application.add_handler(CommandHandler("mode", handleMode))
 
     application.add_handler(CallbackQueryHandler(handleTopicChoice, pattern='^(mighty_macaque|pigeon_plight)$'))
     application.add_handler(CallbackQueryHandler(handleTopicStart, pattern='topic_start'))
     application.add_handler(CallbackQueryHandler(handleAnswer, pattern='^\d+$'))
     application.add_handler(CallbackQueryHandler(handleNextQuestion, pattern='^next_question$'))
-    application.add_handler(CallbackQueryHandler(setMode, pattern='^(Easy|Intermediate)$'))
 
     # Schedule daily reset at 10 AM UTC
     job_queue = application.job_queue
