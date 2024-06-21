@@ -361,15 +361,15 @@ async def handleAnswer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         correct_answers = context.user_data.get('correct_answers')
         badge_filename = "badge_1star"
-        caption = "*Great start!* You earn yourself an EcoEnthusiast badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
+        caption = "*Great start!* You've earned yourself an EcoEnthusiast badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
 
         if correct_answers == 4:
             badge_filename = "badge_3star"
-            caption = "*Awesome! You have answered 4 out of 4 questions perfectly.* You earn yourself an EcoExperts badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
+            caption = "*Awesome! You have answered 4 out of 4 questions perfectly.* You've earn yourself an EcoExperts badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
 
         elif correct_answers == 2 or correct_answers == 3:
             badge_filename = "badge_2star"
-            caption = "*Excellent work! You got half or more questions correctly.* You earn yourself an EcoExplorer badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
+            caption = "*Excellent work! You got half or more questions correctly.* You've earn yourself an EcoExplorer badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
 
         caption = formatText(caption)
 
