@@ -365,11 +365,11 @@ async def handleAnswer(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if correct_answers == 4:
             badge_filename = "badge_3star"
-            caption = "*Awesome! You have answered 4 out of 4 questions perfectly.* You've earn yourself an EcoExperts badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
+            caption = "*Awesome! You have answered 4 out of 4 questions perfectly.* You've earned yourself an EcoExperts badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
 
         elif correct_answers == 2 or correct_answers == 3:
             badge_filename = "badge_2star"
-            caption = "*Excellent work! You got half or more questions correctly.* You've earn yourself an EcoExplorer badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
+            caption = "*Excellent work! You got half or more questions correctly.* You've earned yourself an EcoExplorer badge for your efforts today. Feel proud of your achievement and share on your instagram! See you tomorrow."
 
         caption = formatText(caption)
 
@@ -387,12 +387,12 @@ async def handleNextQuestion(update: Update, context: ContextTypes.DEFAULT_TYPE)
     user_id = query.message.chat.id
     previous_message_id = context.user_data.get('current_message_id')
 
+    await sendQuestion(update, context)
+
     await context.bot.delete_message(
         chat_id=user_id, 
         message_id=previous_message_id
     )
-
-    await sendQuestion(update, context)
 
 async def reset_statistics(context: ContextTypes.DEFAULT_TYPE):
     users_col.update_many({}, {"$set": {"correct_today": 0, "incorrect_today": 0}})
